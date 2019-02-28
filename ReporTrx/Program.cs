@@ -34,7 +34,7 @@ namespace ReporTrx
                 Console.WriteLine($"Error: {ex.Message}");
             }
 
-            Console.WriteLine("\nDone");
+            Console.WriteLine("Done");
             Console.ReadKey();
         }
 
@@ -54,12 +54,6 @@ namespace ReporTrx
             doc.AddStyle(Style);
             var results = tr.Results.ToList();
             var defs = tr.TestDefinitions.ToList();
-            var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1);
-            Console.WriteLine("\nRedundant results:");
-            foreach (var redundant in redundantTests)
-            {
-                Console.WriteLine($"{redundant.Key} - {redundant.Count()}");
-            }
 
             AddTag("h2", "SUMMARY");
             var headerTable = AddTag("table");
@@ -69,7 +63,7 @@ namespace ReporTrx
             headerTable.AddRow(new List<object> { "Outcome", tr.ResultSummary.outcome });
             headerTable.AddRow(new List<object> { "Start", tr.Times.start });
             headerTable.AddRow(new List<object> { "End", tr.Times.finish });
-            headerTable.AddRow(new List<object> { "Duration", tr.Times.finish.Subtract(tr.Times.start).TotalMinutes.ToString("0000.00") + " mins" });
+            headerTable.AddRow(new List<object> { "Duration", tr.Times.finish.Subtract(tr.Times.start).TotalMinutes.ToString("N2") + " mins" });
             headerTable.AddRow(new List<object> { "TestDefinitions", defs.Count });
             headerTable.AddRow(new List<object> { "TestResults", results.Count });
             headerTable.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
@@ -81,13 +75,45 @@ namespace ReporTrx
             headerTable.AddRow(new List<object> { "Timeouts", tr.ResultSummary.Counters.timeout });
             headerTable.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
 
-            AddTag("h2", "RESULTS");
+            var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
+            AddTag("h2", "REDUNDANT RESULTS");
+            var redundantsTable = AddTag("table");
+            var i = 0;
+            foreach (var redundant in redundantTests)
+            {
+                i++;
+                redundantsTable.AddRow(new List<object> { i, redundant.Key, redundant.Count() });
+            }
+
+            var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
+            AddTag("h2", "TOP ERRORS");
+            var errorsTable = AddTag("table");
+            i = 0;
+            foreach (var error in errors)
+            {
+                i++;
+                errorsTable.AddRow(new List<object> { i, error.Key, error.Count() });
+            }
+
+            var slowest = results.OrderByDescending(r => r.endTime.Subtract(r.startTime).TotalMinutes).Where(s => s.endTime.Subtract(s.startTime).TotalMinutes > 5);
+            AddTag("h2", "TOP SLOWEST");
+            var slowestTable = AddTag("table");
+            i = 0;
+            foreach (var slow in slowest)
+            {
+                i++;
+                slowestTable.AddRow(new List<object> { i, slow.testName, slow.endTime.Subtract(slow.startTime).TotalMinutes.ToString("N2") + " mins"});
+            }
+
+            AddTag("h2", "ALL RESULTS");
             var resultsTable = AddTag("table");
             resultsTable.AddRow(new List<object> { "NAME", "OUTCOME", "ERROR", "TRACE" }, true);
+            i = 0;
             foreach (var res in results)
             {
+                i++;
                 var def = defs.SingleOrDefault(d => res.testName.Equals(d.name));
-                resultsTable.AddRow(new List<object> { res.testName, res.outcome, res.Output?.ErrorInfo?.Message, res.Output?.ErrorInfo?.StackTrace });
+                resultsTable.AddRow(new List<object> { i, res.testName, res.outcome, res.Output?.ErrorInfo?.Message, res.Output?.ErrorInfo?.StackTrace });
             }
         }
 
