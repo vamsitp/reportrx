@@ -1,3 +1,5 @@
-# reportrx
-TRX to HTML Report
+# `reportrx`
+
+> TRX to HTML Report
+
 ![Snapshot](Snapshot.png)
