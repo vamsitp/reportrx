@@ -107,7 +107,7 @@ namespace ReporTrx
 
             AddTag("h2", "ALL RESULTS");
             var resultsTable = AddTag("table");
-            resultsTable.AddRow(new List<object> { "NAME", "OUTCOME", "ERROR", "TRACE" }, true);
+            resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "ERROR", "TRACE" }, true);
             i = 0;
             foreach (var res in results)
             {
