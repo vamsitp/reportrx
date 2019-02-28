@@ -1,4 +1,4 @@
-# `reportrx`
+# `repor[t]rx`
 
 > TRX to HTML Report
 
