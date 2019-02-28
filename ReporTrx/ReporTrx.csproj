@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsTool>true</IsTool>
+    <ToolCommandName>reportrx</ToolCommandName>
+    <PackageOutputPath>./bin</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Vamsi TP</Authors>
+    <Title>ReporTrx</Title>
+    <PackageDescription>Generate HTML report from TRX files</PackageDescription>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/vamsitp/reportrx</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vamsitp/reportrx</RepositoryUrl>
+    <PackageTags>Trx;Html;Report;VsTest;MsTest</PackageTags>
+    <Company>Microsoft</Company>
+    <Version>1.0.0</Version>
+    <!--<PackAsTool>true</PackAsTool>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HtmlTags" Version="7.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+</Project>
