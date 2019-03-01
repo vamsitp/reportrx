@@ -69,7 +69,7 @@ namespace ReporTrx
             headerTable.AddRow(new List<object> { "TestResults", results.Count });
             headerTable.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
             headerTable.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.executed });
-            headerTable.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted });
+            headerTable.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted == 0 ? tr.ResultSummary.Counters.total - (tr.ResultSummary.Counters.passed + tr.ResultSummary.Counters.failed)});
             headerTable.AddRow(new List<object> { "Passed", tr.ResultSummary.Counters.passed});
             headerTable.AddRow(new List<object> { "Failed", tr.ResultSummary.Counters.failed });
             headerTable.AddRow(new List<object> { "Inconclusive", tr.ResultSummary.Counters.inconclusive });
@@ -115,7 +115,8 @@ namespace ReporTrx
             {
                 i++;
                 var def = defs.SingleOrDefault(d => res.testName.Equals(d.name));
-                resultsTable.AddRow(new List<object> { i, res.testName, res.outcome, res.Output?.ErrorInfo?.Message, res.Output?.ErrorInfo?.StackTrace });
+                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace) item = (def.TestMethod.codeBase, def.TestMethod.className, res.testName, res.outcome, res.Output?.ErrorInfo?.Message, res.Output?.ErrorInfo?.StackTrace);
+                resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace });
             }
         }
 
