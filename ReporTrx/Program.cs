@@ -14,6 +14,7 @@ namespace ReporTrx
         private static TestRun tr;
         private static HtmlDocument doc;
         private static readonly string Style = ConfigurationManager.AppSettings[nameof(Style)];
+        private static readonly int TopSlowestThresholdInMins = int.Parse(ConfigurationManager.AppSettings[nameof(TopSlowestThresholdInMins)]);
 
         private static void Main(string[] args)
         {
@@ -67,7 +68,8 @@ namespace ReporTrx
             headerTable.AddRow(new List<object> { "TestDefinitions", defs.Count });
             headerTable.AddRow(new List<object> { "TestResults", results.Count });
             headerTable.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
-            headerTable.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.total });
+            headerTable.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.executed });
+            headerTable.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted });
             headerTable.AddRow(new List<object> { "Passed", tr.ResultSummary.Counters.passed});
             headerTable.AddRow(new List<object> { "Failed", tr.ResultSummary.Counters.failed });
             headerTable.AddRow(new List<object> { "Inconclusive", tr.ResultSummary.Counters.inconclusive });
@@ -95,14 +97,14 @@ namespace ReporTrx
                 errorsTable.AddRow(new List<object> { i, error.Key, error.Count() });
             }
 
-            var slowest = results.OrderByDescending(r => r.endTime.Subtract(r.startTime).TotalMinutes).Where(s => s.endTime.Subtract(s.startTime).TotalMinutes > 5);
+            var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
             AddTag("h2", "TOP SLOWEST");
             var slowestTable = AddTag("table");
             i = 0;
             foreach (var slow in slowest)
             {
                 i++;
-                slowestTable.AddRow(new List<object> { i, slow.testName, slow.endTime.Subtract(slow.startTime).TotalMinutes.ToString("N2") + " mins"});
+                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString("N2") + " mins"});
             }
 
             AddTag("h2", "ALL RESULTS");
