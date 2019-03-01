@@ -13,6 +13,7 @@
         private const string Th = "th";
         private const string Td = "td";
         private const string Font = "font";
+        private const string Anchor = "a";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
         private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -28,14 +29,31 @@
             { "0%", "red" }
         };
 
-        public static void AddRow(this HtmlTag table, IEnumerable<object> cols, bool header = false)
+        public static void AddRow(this HtmlTag table, IEnumerable<object> cols, bool header = false, Dictionary<int, string> ids = null, Dictionary<int, string> anchors = null)
         {
             var row = new HtmlTag(Tr);
             table.Children.Add(row);
-            foreach (var c in cols)
+            for (var i = 0; i < cols.Count(); i++)
             {
+                var c = cols.ElementAt(i);
+                var val = c?.ToString();
                 var col = row.Add(header ? Th : Td);
-                col.ColoredText(c?.ToString() ?? string.Empty, ColorEntireRow ? cols : null);
+                if (anchors?.ContainsKey(i) == true)
+                {
+                    var anchor = new HtmlTag(Anchor);
+                    anchor.Attr("href", $"#{anchors[i]}");
+                    anchor.Text(val);
+                    col.Children.Add(anchor);
+                }
+                else
+                {
+                    col.ColoredText(val ?? string.Empty, ColorEntireRow ? cols : null);
+                }
+
+                if (ids?.ContainsKey(i) == true)
+                {
+                    col.Id(ids[i]);
+                }
             }
         }
 

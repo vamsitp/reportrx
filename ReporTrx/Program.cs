@@ -15,6 +15,7 @@ namespace ReporTrx
         private const string Failed = "Failed";
         private const string Table = "table";
         private const string H2 = "h2";
+        private const string H3 = "h3";
         private const string N2 = "N2";
         private const string Mins = " mins";
 
@@ -91,6 +92,7 @@ namespace ReporTrx
 
             AddTag(H2, "OVERVIEW");
             var overviewTable = AddTag(Table);
+            overviewTable.Id(nameof(overviewTable));
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
             overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL", "PASSED", "FAILED", "PASS %" }, true);
@@ -98,12 +100,13 @@ namespace ReporTrx
             foreach (var c in classes)
             {
                 i++;
-                overviewTable.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%" });
+                overviewTable.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%" }, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
 
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "TOP ERRORS");
             var errorsTable = AddTag(Table);
+            errorsTable.Id(nameof(errorsTable));
             i = 0;
             foreach (var error in errors)
             {
@@ -114,21 +117,23 @@ namespace ReporTrx
             var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
             AddTag(H2, "TOP SLOWEST");
             var slowestTable = AddTag(Table);
+            slowestTable.Id(nameof(slowestTable));
             i = 0;
             foreach (var slow in slowest)
             {
                 i++;
-                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins });
+                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins }, anchors: new Dictionary<int, string> { { 1, slow.testName } });
             }
 
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "REDUNDANT RESULTS");
             var redundantsTable = AddTag(Table);
+            redundantsTable.Id(nameof(redundantsTable));
             i = 0;
             foreach (var redundant in redundantTests)
             {
                 i++;
-                redundantsTable.AddRow(new List<object> { i, redundant.Key, redundant.Count() });
+                redundantsTable.AddRow(new List<object> { i, redundant.Key, redundant.Count() }, anchors: new Dictionary<int, string> { { 1, redundant.Key } });
             }
 
             AddTag(H2, "ALL RESULTS");
@@ -136,14 +141,17 @@ namespace ReporTrx
             foreach (var c in classes)
             {
                 j++;
-                AddTag("h3", $"{j}. {c.Key} ({(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}% Pass)");
+                var tag = AddTag(H3, $"{j}. {c.Key} ({(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}% Pass)");
+                tag.Id(c.Key);
                 var resultsTable = AddTag(Table);
+
+                // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
                 resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "ERROR", "TRACE" }, true);
                 i = 0;
                 foreach (var item in c)
                 {
                     i++;
-                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace });
+                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } } );
                 }
             }
         }
