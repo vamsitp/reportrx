@@ -15,7 +15,18 @@
         private const string Font = "font";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
-        private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "Passed", "green" }, { "Failed", "red" }, { "NotExecuted", "gray" }, { "Inconclusive", "gray" }, { "Pending", "gray" }, { "Warning", "orange" }, { "Timeout", "orange" } };
+        private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Passed", "green" },
+            { "Failed", "red" },
+            { "NotExecuted", "gray" },
+            { "Inconclusive", "gray" },
+            { "Pending", "gray" },
+            { "Warning", "orange" },
+            { "Timeout", "orange" },
+            { "100%", "green" },
+            { "0%", "red" }
+        };
 
         public static void AddRow(this HtmlTag table, IEnumerable<object> cols, bool header = false)
         {
