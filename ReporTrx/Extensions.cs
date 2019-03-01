@@ -54,7 +54,7 @@
                 var c = cols.ElementAt(i);
                 var val = c?.ToString();
                 var col = row.Add(header ? Th : Td);
-                col.AddStyle("word-break", "break-all");
+                col.AddClass("cell expand-maximum-on-hover"); //.AddStyle("word-break", "break-all");
                 if (anchors?.ContainsKey(i) == true)
                 {
                     var anchor = new HtmlTag(Anchor);
@@ -78,7 +78,7 @@
         {
             id = id.Replace(".", "_");
             initScript.AppendFormat(DataTable, id);
-            table.AddClass(DisplayCompact).AddStyle(Width, Cent).AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
+            table.AddClass(DisplayCompact).AddStyle(Width, Cent); // .AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
             return table.Id(id);
         }
 
