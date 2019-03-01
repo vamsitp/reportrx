@@ -20,6 +20,7 @@ namespace ReporTrx
         private const string H3 = "h3";
         private const string N2 = "N2";
         private const string Mins = " mins";
+        private const string TBody = "tbody";
 
         private static TestRun tr;
         private static HtmlDocument doc;
@@ -100,11 +101,12 @@ namespace ReporTrx
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
             overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
+            var overviewBody = overviewTable.Add(TBody);
             var i = 0;
             foreach (var c in classes)
             {
                 i++;
-                overviewTable.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToString(N2) + Mins}, anchors: new Dictionary<int, string> { { 1, c.Key } });
+                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToString(N2) + Mins}, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
 
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
@@ -112,11 +114,12 @@ namespace ReporTrx
             var errorsTable = AddTag(Table);
             errorsTable.Id(nameof(errorsTable));
             errorsTable.AddRow(new List<object> { "#", "ERROR", "OCCURENCES" }, true);
+            var errorsBody = errorsTable.Add(TBody);
             i = 0;
             foreach (var error in errors)
             {
                 i++;
-                errorsTable.AddRow(new List<object> { i, error.Key, error.Count() });
+                errorsBody.AddRow(new List<object> { i, error.Key, error.Count() });
             }
 
             var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
@@ -124,12 +127,13 @@ namespace ReporTrx
             var slowestTable = AddTag(Table);
             slowestTable.Id(nameof(slowestTable));
             slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
+            var slowestBody = slowestTable.Add(TBody);
             i = 0;
             foreach (var slow in slowest)
             {
                 i++;
                 var def = GetTestDefMatch(slow, defs);
-                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins, def.TestMethod.className }, anchors: new Dictionary<int, string> { { 1, slow.testName }, { 3, def.TestMethod.className } });
+                slowestBody.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins, def.TestMethod.className }, anchors: new Dictionary<int, string> { { 1, slow.testName }, { 3, def.TestMethod.className } });
             }
 
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
@@ -138,10 +142,11 @@ namespace ReporTrx
             redundantsTable.Id(nameof(redundantsTable));
             redundantsTable.AddRow(new List<object> { "#", "TEST", "COUNT" }, true);
             i = 0;
+            var redundantsBody = redundantsTable.Add(TBody);
             foreach (var redundant in redundantTests)
             {
                 i++;
-                redundantsTable.AddRow(new List<object> { i, redundant.Key, redundant.Count() }, anchors: new Dictionary<int, string> { { 1, redundant.Key } });
+                redundantsBody.AddRow(new List<object> { i, redundant.Key, redundant.Count() }, anchors: new Dictionary<int, string> { { 1, redundant.Key } });
             }
 
             AddTag(H2, "ALL RESULTS");
@@ -156,10 +161,11 @@ namespace ReporTrx
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
                 resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);
                 i = 0;
+                var resultsBody = resultsTable.Add(TBody);
                 foreach (var item in c)
                 {
                     i++;
-                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.TotalMinutes.ToString(N2) + Mins, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
+                    resultsBody.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.TotalMinutes.ToString(N2) + Mins, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
         }

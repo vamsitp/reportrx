@@ -14,6 +14,8 @@
         private const string Td = "td";
         private const string Font = "font";
         private const string Anchor = "a";
+        private const string THead = "thead";
+        private const string HRef = "href";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
         private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -32,7 +34,16 @@
         public static void AddRow(this HtmlTag table, IEnumerable<object> cols, bool header = false, Dictionary<int, string> ids = null, Dictionary<int, string> anchors = null)
         {
             var row = new HtmlTag(Tr);
-            table.Children.Add(row);
+            if (header)
+            {
+                var thead = table.Add(THead);
+                thead.Children.Add(row);
+            }
+            else
+            {
+                table.Children.Add(row);
+            }
+
             for (var i = 0; i < cols.Count(); i++)
             {
                 var c = cols.ElementAt(i);
@@ -41,7 +52,7 @@
                 if (anchors?.ContainsKey(i) == true)
                 {
                     var anchor = new HtmlTag(Anchor);
-                    anchor.Attr("href", $"#{anchors[i]}");
+                    anchor.Attr(HRef, $"#{anchors[i]}");
                     anchor.Text(val);
                     col.Children.Add(anchor);
                 }
