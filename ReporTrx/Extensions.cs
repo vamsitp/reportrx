@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Configuration;
     using System.Linq;
+    using System.Text;
 
     using HtmlTags;
 
@@ -16,6 +17,7 @@
         private const string Anchor = "a";
         private const string THead = "thead";
         private const string HRef = "href";
+        private const string DataTable = " $('#{0}').DataTable();";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
         private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -66,6 +68,14 @@
                     col.Id(ids[i]);
                 }
             }
+        }
+
+        public static HtmlTag ToDataTable(this HtmlTag table, string id, StringBuilder initScript)
+        {
+            id = id.Replace(".", "_");
+            initScript.AppendFormat(DataTable, id);
+            table.AddClass("display").AddStyle("width", "100%");
+            return table.Id(id);
         }
 
         public static IList<HtmlTag> AddStyle(this HtmlTag tag, Dictionary<string, string> styles)

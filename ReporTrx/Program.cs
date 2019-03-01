@@ -5,6 +5,7 @@ namespace ReporTrx
     using System.Configuration;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Xml.Serialization;
 
     using HtmlTags;
@@ -65,7 +66,14 @@ namespace ReporTrx
         private static void GenerateHtml()
         {
             doc = new HtmlDocument();
+            doc.Head.Add("link").Attr("href", "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css").Attr("rel", "stylesheet").Attr("type", "text/css");
             doc.AddStyle(Style);
+            doc.Head.Add("style").Attr("class", "init").Attr("type", "text/css");
+            doc.Head.Add("script").Attr("language", "javascript").Attr("src", "https://code.jquery.com/jquery-3.3.1.min.js").Attr("type", "text/javascript");
+            doc.Head.Add("script").Attr("language", "javascript").Attr("src", "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js").Attr("type", "text/javascript");
+
+            var init = new StringBuilder("$(document).ready(function() {");
+
             var results = tr.Results.ToList();
             var defs = tr.TestDefinitions.ToList();
             var classes = results.Select(r =>
@@ -76,28 +84,29 @@ namespace ReporTrx
             }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
             AddTag(H2, "SUMMARY");
-            var headerTable = AddTag(Table);
-            headerTable.AddRow(new List<object> { "Name", tr.name });
-            headerTable.AddRow(new List<object> { "ID", tr.id });
-            headerTable.AddRow(new List<object> { "Outcome", tr.ResultSummary.outcome });
-            headerTable.AddRow(new List<object> { "Start", tr.Times.start });
-            headerTable.AddRow(new List<object> { "End", tr.Times.finish });
-            headerTable.AddRow(new List<object> { "Duration", tr.Times.finish.Subtract(tr.Times.start).TotalMinutes.ToString(N2) + Mins });
-            headerTable.AddRow(new List<object> { "TestDefinitions", defs.Count });
-            headerTable.AddRow(new List<object> { "TestResults", results.Count });
-            headerTable.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
-            headerTable.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.executed });
-            headerTable.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted == 0 ? tr.ResultSummary.Counters.total - (tr.ResultSummary.Counters.passed + tr.ResultSummary.Counters.failed) : tr.ResultSummary.Counters.notExecuted });
-            headerTable.AddRow(new List<object> { Passed, tr.ResultSummary.Counters.passed });
-            headerTable.AddRow(new List<object> { Failed, tr.ResultSummary.Counters.failed });
-            headerTable.AddRow(new List<object> { "Inconclusive", tr.ResultSummary.Counters.inconclusive });
-            headerTable.AddRow(new List<object> { "Pending", tr.ResultSummary.Counters.pending });
-            headerTable.AddRow(new List<object> { "Timeouts", tr.ResultSummary.Counters.timeout });
-            headerTable.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
+            var summaryTable = AddTag(Table).ToDataTable("summaryTable", init);
+            summaryTable.AddRow(new List<object> { "KEY", "VALUE" }, true);
+            var summaryBody = summaryTable.Add(TBody);
+            summaryBody.AddRow(new List<object> { "Name", tr.name });
+            summaryBody.AddRow(new List<object> { "ID", tr.id });
+            summaryBody.AddRow(new List<object> { "Outcome", tr.ResultSummary.outcome });
+            summaryBody.AddRow(new List<object> { "Start", tr.Times.start });
+            summaryBody.AddRow(new List<object> { "End", tr.Times.finish });
+            summaryBody.AddRow(new List<object> { "Duration", tr.Times.finish.Subtract(tr.Times.start).TotalMinutes.ToString(N2) + Mins });
+            summaryBody.AddRow(new List<object> { "TestDefinitions", defs.Count });
+            summaryBody.AddRow(new List<object> { "TestResults", results.Count });
+            summaryBody.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
+            summaryBody.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.executed });
+            summaryBody.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted == 0 ? tr.ResultSummary.Counters.total - (tr.ResultSummary.Counters.passed + tr.ResultSummary.Counters.failed) : tr.ResultSummary.Counters.notExecuted });
+            summaryBody.AddRow(new List<object> { Passed, tr.ResultSummary.Counters.passed });
+            summaryBody.AddRow(new List<object> { Failed, tr.ResultSummary.Counters.failed });
+            summaryBody.AddRow(new List<object> { "Inconclusive", tr.ResultSummary.Counters.inconclusive });
+            summaryBody.AddRow(new List<object> { "Pending", tr.ResultSummary.Counters.pending });
+            summaryBody.AddRow(new List<object> { "Timeouts", tr.ResultSummary.Counters.timeout });
+            summaryBody.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
 
             AddTag(H2, "OVERVIEW");
-            var overviewTable = AddTag(Table);
-            overviewTable.Id(nameof(overviewTable));
+            var overviewTable = AddTag(Table).ToDataTable("overviewTable", init);
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
             overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
@@ -111,8 +120,7 @@ namespace ReporTrx
 
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "TOP ERRORS");
-            var errorsTable = AddTag(Table);
-            errorsTable.Id(nameof(errorsTable));
+            var errorsTable = AddTag(Table).ToDataTable("errorsTable", init);
             errorsTable.AddRow(new List<object> { "#", "ERROR", "OCCURENCES" }, true);
             var errorsBody = errorsTable.Add(TBody);
             i = 0;
@@ -124,8 +132,7 @@ namespace ReporTrx
 
             var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
             AddTag(H2, "TOP SLOWEST");
-            var slowestTable = AddTag(Table);
-            slowestTable.Id(nameof(slowestTable));
+            var slowestTable = AddTag(Table).ToDataTable("slowestTable", init);
             slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
             var slowestBody = slowestTable.Add(TBody);
             i = 0;
@@ -138,8 +145,7 @@ namespace ReporTrx
 
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "REDUNDANT RESULTS");
-            var redundantsTable = AddTag(Table);
-            redundantsTable.Id(nameof(redundantsTable));
+            var redundantsTable = AddTag(Table).ToDataTable("redundantsTable", init);
             redundantsTable.AddRow(new List<object> { "#", "TEST", "COUNT" }, true);
             i = 0;
             var redundantsBody = redundantsTable.Add(TBody);
@@ -156,7 +162,7 @@ namespace ReporTrx
                 j++;
                 var tag = AddTag(H3, $"{j}. {c.Key} ({(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}% Pass)");
                 tag.Id(c.Key);
-                var resultsTable = AddTag(Table);
+                var resultsTable = AddTag(Table).ToDataTable($"resultsTable_{c.Key}", init);
 
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
                 resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);
@@ -168,6 +174,9 @@ namespace ReporTrx
                     resultsBody.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.TotalMinutes.ToString(N2) + Mins, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
+
+            init.Append(" } );");
+            doc.AddJavaScript(init.ToString()).Attr("class", "init");
         }
 
         private static TestRunUnitTest GetTestDefMatch(TestRunUnitTestResult r, List<TestRunUnitTest> defs)
