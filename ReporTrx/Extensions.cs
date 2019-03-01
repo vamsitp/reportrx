@@ -18,6 +18,9 @@
         private const string THead = "thead";
         private const string HRef = "href";
         private const string DataTable = " $('#{0}').DataTable();";
+        private const string DisplayCompact = "display compact";
+        private const string Width = "width";
+        private const string Cent = "100%";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
         private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -29,7 +32,7 @@
             { "Pending", "gray" },
             { "Warning", "orange" },
             { "Timeout", "orange" },
-            { "100%", "green" },
+            { Cent, "green" },
             { "0%", "red" }
         };
 
@@ -74,7 +77,7 @@
         {
             id = id.Replace(".", "_");
             initScript.AppendFormat(DataTable, id);
-            table.AddClass("display").AddStyle("width", "100%");
+            table.AddClass(DisplayCompact).AddStyle(Width, Cent);
             return table.Id(id);
         }
 

@@ -22,6 +22,13 @@ namespace ReporTrx
         private const string N2 = "N2";
         private const string Mins = " mins";
         private const string TBody = "tbody";
+        private const string Language = "language";
+        private const string HRef = "href";
+        private const string Script = "script";
+        private const string JavaScript = "javascript";
+        private const string Src = "src";
+        private const string TypeJavaScript = "text/javascript";
+        private const string TypeCss = "text/css";
 
         private static TestRun tr;
         private static HtmlDocument doc;
@@ -65,15 +72,8 @@ namespace ReporTrx
 
         private static void GenerateHtml()
         {
-            doc = new HtmlDocument();
-            doc.Head.Add("link").Attr("href", "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css").Attr("rel", "stylesheet").Attr("type", "text/css");
-            doc.AddStyle(Style);
-            doc.Head.Add("style").Attr("class", "init").Attr("type", "text/css");
-            doc.Head.Add("script").Attr("language", "javascript").Attr("src", "https://code.jquery.com/jquery-3.3.1.min.js").Attr("type", "text/javascript");
-            doc.Head.Add("script").Attr("language", "javascript").Attr("src", "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js").Attr("type", "text/javascript");
-
             var init = new StringBuilder("$(document).ready(function() {");
-
+            CreateDoc();
             var results = tr.Results.ToList();
             var defs = tr.TestDefinitions.ToList();
             var classes = results.Select(r =>
@@ -83,6 +83,31 @@ namespace ReporTrx
                 return item;
             }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
+            PopulateTables(init, results, defs, classes);
+            doc.AddJavaScript(init.Append(" } );").ToString()).Attr("class", "init");
+        }
+
+        private static void CreateDoc()
+        {
+            doc = new HtmlDocument();
+            doc.Head.Add("link").Attr(HRef, "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css").Attr("rel", "stylesheet").Attr("type", TypeCss);
+            doc.AddStyle(Style);
+            doc.Head.Add("style").Attr("class", "init").Attr("type", TypeCss);
+            doc.Head.Add(Script).Attr(Language, JavaScript).Attr(Src, "https://code.jquery.com/jquery-3.3.1.min.js").Attr("type", TypeJavaScript);
+            doc.Head.Add(Script).Attr(Language, JavaScript).Attr(Src, "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js").Attr("type", TypeJavaScript);
+        }
+
+        private static void PopulateTables(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        {
+            PopulateSummaryTable(init, results, defs);
+            PopulateOverviewTable(init, classes);
+            PopulateErrorsTable(init, results);
+            PopulateSlowestTable(init, results, defs);
+            PopulateRedundantTable(init, results);
+            PopulateAllResultsTable(init, classes);
+        }
+        private static void PopulateSummaryTable(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
+        {
             AddTag(H2, "SUMMARY");
             var summaryTable = AddTag(Table).ToDataTable("summaryTable", init);
             summaryTable.AddRow(new List<object> { "KEY", "VALUE" }, true);
@@ -104,7 +129,10 @@ namespace ReporTrx
             summaryBody.AddRow(new List<object> { "Pending", tr.ResultSummary.Counters.pending });
             summaryBody.AddRow(new List<object> { "Timeouts", tr.ResultSummary.Counters.timeout });
             summaryBody.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
+        }
 
+        private static void PopulateOverviewTable(StringBuilder init, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        {
             AddTag(H2, "OVERVIEW");
             var overviewTable = AddTag(Table).ToDataTable("overviewTable", init);
 
@@ -115,46 +143,58 @@ namespace ReporTrx
             foreach (var c in classes)
             {
                 i++;
-                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToString(N2) + Mins}, anchors: new Dictionary<int, string> { { 1, c.Key } });
+                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToString(N2) + Mins }, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
+        }
 
+        private static void PopulateErrorsTable(StringBuilder init, List<TestRunUnitTestResult> results)
+        {
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "TOP ERRORS");
             var errorsTable = AddTag(Table).ToDataTable("errorsTable", init);
             errorsTable.AddRow(new List<object> { "#", "ERROR", "OCCURENCES" }, true);
             var errorsBody = errorsTable.Add(TBody);
-            i = 0;
+            var i = 0;
             foreach (var error in errors)
             {
                 i++;
                 errorsBody.AddRow(new List<object> { i, error.Key, error.Count() });
             }
+        }
 
+        private static void PopulateSlowestTable(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
+        {
             var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
             AddTag(H2, "TOP SLOWEST");
             var slowestTable = AddTag(Table).ToDataTable("slowestTable", init);
             slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
             var slowestBody = slowestTable.Add(TBody);
-            i = 0;
+            var i = 0;
             foreach (var slow in slowest)
             {
                 i++;
                 var def = GetTestDefMatch(slow, defs);
                 slowestBody.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins, def.TestMethod.className }, anchors: new Dictionary<int, string> { { 1, slow.testName }, { 3, def.TestMethod.className } });
             }
+        }
 
+        private static void PopulateRedundantTable(StringBuilder init, List<TestRunUnitTestResult> results)
+        {
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "REDUNDANT RESULTS");
             var redundantsTable = AddTag(Table).ToDataTable("redundantsTable", init);
             redundantsTable.AddRow(new List<object> { "#", "TEST", "COUNT" }, true);
-            i = 0;
+            var i = 0;
             var redundantsBody = redundantsTable.Add(TBody);
             foreach (var redundant in redundantTests)
             {
                 i++;
                 redundantsBody.AddRow(new List<object> { i, redundant.Key, redundant.Count() }, anchors: new Dictionary<int, string> { { 1, redundant.Key } });
             }
+        }
 
+        private static void PopulateAllResultsTable(StringBuilder init, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        {
             AddTag(H2, "ALL RESULTS");
             var j = 0;
             foreach (var c in classes)
@@ -166,7 +206,7 @@ namespace ReporTrx
 
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
                 resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);
-                i = 0;
+                var i = 0;
                 var resultsBody = resultsTable.Add(TBody);
                 foreach (var item in c)
                 {
@@ -174,9 +214,6 @@ namespace ReporTrx
                     resultsBody.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.TotalMinutes.ToString(N2) + Mins, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
-
-            init.Append(" } );");
-            doc.AddJavaScript(init.ToString()).Attr("class", "init");
         }
 
         private static TestRunUnitTest GetTestDefMatch(TestRunUnitTestResult r, List<TestRunUnitTest> defs)
