@@ -3,12 +3,13 @@ namespace ReporTrx
     using System;
     using System.Collections.Generic;
     using System.Configuration;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
 
     using HtmlTags;
+
+    using Serilog;
 
     internal class Program
     {
@@ -27,10 +28,11 @@ namespace ReporTrx
 
         private static void Main(string[] args)
         {
+            SetLogger();
             try
             {
                 var path = args[0];
-                Console.WriteLine($"Input: {path}");
+                Log.Information($"Input: {path}");
                 var files = Directory.GetFiles(Path.GetDirectoryName(path), Path.GetFileName(path));
                 foreach (var file in files)
                 {
@@ -41,16 +43,17 @@ namespace ReporTrx
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Log.Fatal(ex.ToString());
             }
 
-            Console.WriteLine("Done");
+            Log.Information("Done!");
+            Log.CloseAndFlush();
             Console.ReadKey();
         }
 
         private static void ParseTestRun(string file)
         {
-            Console.WriteLine($"Parsing: {file}");
+            Log.Information($"Parsing: {file}");
             var ser = new XmlSerializer(typeof(TestRun));
             using (var stream = File.Open(file, FileMode.Open))
             {
@@ -66,10 +69,16 @@ namespace ReporTrx
             var defs = tr.TestDefinitions.ToList();
             var classes = results.Select(r =>
             {
-                var def = defs.Where(x => r.testName.Equals(x.name));
-                Debug.Assert(def.Count() == 1, $"Multiple definitions found for {r.testName}");
+                var def = defs.Where(x => r.testName.Equals(x.name))?.ToList();
+
+                // Debug.Assert(def.Count == 1, $"Multiple definitions found for {r.testName}");
+                if (def.Count > 1)
+                {
+                    Log.Warning($"Multiple definitions found for {r.testName}");
+                }
+
                 var d = def.FirstOrDefault();
-                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace) item = (d.TestMethod.codeBase, d.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace);
+                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration) item = (d.TestMethod.codeBase, d.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
                 return item;
             }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
@@ -98,12 +107,12 @@ namespace ReporTrx
             overviewTable.Id(nameof(overviewTable));
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
-            overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL", "PASSED", "FAILED", "PASS %" }, true);
+            overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
             var i = 0;
             foreach (var c in classes)
             {
                 i++;
-                overviewTable.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%" }, anchors: new Dictionary<int, string> { { 1, c.Key } });
+                overviewTable.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Passed)), c.Count(x => x.Outcome.Equals(Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToString(N2) + Mins}, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
 
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
@@ -182,6 +191,11 @@ namespace ReporTrx
         private static void Save(string file)
         {
             doc.WriteToFile($"{file}.html");
+        }
+
+        private static void SetLogger()
+        {
+            Log.Logger = new LoggerConfiguration().MinimumLevel.Debug().WriteTo.Console(outputTemplate: "[{Level:u3}] {Message}{NewLine}").Enrich.FromLogContext().CreateLogger();
         }
     }
 }
