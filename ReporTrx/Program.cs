@@ -69,16 +69,8 @@ namespace ReporTrx
             var defs = tr.TestDefinitions.ToList();
             var classes = results.Select(r =>
             {
-                var def = defs.Where(x => r.testName.Equals(x.name))?.ToList();
-
-                // Debug.Assert(def.Count == 1, $"Multiple definitions found for {r.testName}");
-                if (def.Count > 1)
-                {
-                    Log.Warning($"Multiple definitions found for {r.testName}");
-                }
-
-                var d = def.FirstOrDefault();
-                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration) item = (d.TestMethod.codeBase, d.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
+                var def = GetTestDefMatch(r, defs);
+                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration) item = (def.TestMethod.codeBase, def.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
                 return item;
             }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
@@ -107,7 +99,7 @@ namespace ReporTrx
             overviewTable.Id(nameof(overviewTable));
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
-            overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
+            overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
             var i = 0;
             foreach (var c in classes)
             {
@@ -119,6 +111,7 @@ namespace ReporTrx
             AddTag(H2, "TOP ERRORS");
             var errorsTable = AddTag(Table);
             errorsTable.Id(nameof(errorsTable));
+            errorsTable.AddRow(new List<object> { "#", "ERROR", "OCCURENCES" }, true);
             i = 0;
             foreach (var error in errors)
             {
@@ -130,17 +123,20 @@ namespace ReporTrx
             AddTag(H2, "TOP SLOWEST");
             var slowestTable = AddTag(Table);
             slowestTable.Id(nameof(slowestTable));
+            slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
             i = 0;
             foreach (var slow in slowest)
             {
                 i++;
-                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins }, anchors: new Dictionary<int, string> { { 1, slow.testName } });
+                var def = GetTestDefMatch(slow, defs);
+                slowestTable.AddRow(new List<object> { i, slow.testName, slow.duration.TimeOfDay.TotalMinutes.ToString(N2) + Mins, def.TestMethod.className }, anchors: new Dictionary<int, string> { { 1, slow.testName }, { 3, def.TestMethod.className } });
             }
 
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "REDUNDANT RESULTS");
             var redundantsTable = AddTag(Table);
             redundantsTable.Id(nameof(redundantsTable));
+            redundantsTable.AddRow(new List<object> { "#", "TEST", "COUNT" }, true);
             i = 0;
             foreach (var redundant in redundantTests)
             {
@@ -158,14 +154,27 @@ namespace ReporTrx
                 var resultsTable = AddTag(Table);
 
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
-                resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "ERROR", "TRACE" }, true);
+                resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);
                 i = 0;
                 foreach (var item in c)
                 {
                     i++;
-                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
+                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.TotalMinutes.ToString(N2) + Mins, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
+        }
+
+        private static TestRunUnitTest GetTestDefMatch(TestRunUnitTestResult r, List<TestRunUnitTest> defs)
+        {
+            var def = defs.Where(x => r.testName.Equals(x.name))?.ToList();
+
+            // Debug.Assert(def.Count == 1, $"Multiple definitions found for {r.testName}");
+            if (def.Count > 1)
+            {
+                Log.Warning($"Multiple definitions found for {r.testName}");
+            }
+
+            return def.FirstOrDefault();
         }
 
         public static HtmlTag AddTag(string tag = "div", string text = "", HtmlTag parent = null)
