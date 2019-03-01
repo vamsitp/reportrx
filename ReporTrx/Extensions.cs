@@ -17,7 +17,7 @@
         private const string Anchor = "a";
         private const string THead = "thead";
         private const string HRef = "href";
-        private const string DataTable = " $('#{0}').DataTable();";
+        private const string DataTable = " $(\"#{0}\").DataTable({{ \"lengthMenu\": [[-1, 50, 25], [\"All\", 50, 25]] }});";
         private const string DisplayCompact = "display compact";
         private const string Width = "width";
         private const string Cent = "100%";
@@ -54,6 +54,7 @@
                 var c = cols.ElementAt(i);
                 var val = c?.ToString();
                 var col = row.Add(header ? Th : Td);
+                col.AddStyle("word-break", "break-all");
                 if (anchors?.ContainsKey(i) == true)
                 {
                     var anchor = new HtmlTag(Anchor);
@@ -77,7 +78,7 @@
         {
             id = id.Replace(".", "_");
             initScript.AppendFormat(DataTable, id);
-            table.AddClass(DisplayCompact).AddStyle(Width, Cent);
+            table.AddClass(DisplayCompact).AddStyle(Width, Cent).AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
             return table.Id(id);
         }
 
