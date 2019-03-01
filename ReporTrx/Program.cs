@@ -71,7 +71,7 @@ namespace ReporTrx
                 var d = def.FirstOrDefault();
                 (string Assembly, string Class, string Name, string Outcome, string Error, string Trace) item = (d.TestMethod.codeBase, d.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace);
                 return item;
-            }).GroupBy(x => x.Class);
+            }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
             AddTag(H2, "SUMMARY");
             var headerTable = AddTag(Table);
