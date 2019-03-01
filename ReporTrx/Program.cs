@@ -3,6 +3,7 @@ namespace ReporTrx
     using System;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Xml.Serialization;
@@ -65,8 +66,10 @@ namespace ReporTrx
             var defs = tr.TestDefinitions.ToList();
             var classes = results.Select(r =>
             {
-                var def = defs.SingleOrDefault(d => r.testName.Equals(d.name));
-                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace) item = (def.TestMethod.codeBase, def.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace);
+                var def = defs.Where(x => r.testName.Equals(x.name));
+                Debug.Assert(def.Count() == 1, $"Multiple definitions found for {r.testName}");
+                var d = def.FirstOrDefault();
+                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace) item = (d.TestMethod.codeBase, d.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace);
                 return item;
             }).GroupBy(x => x.Class);
 
@@ -83,7 +86,7 @@ namespace ReporTrx
             headerTable.AddRow(new List<object> { "Total", tr.ResultSummary.Counters.total });
             headerTable.AddRow(new List<object> { "Executed", tr.ResultSummary.Counters.executed });
             headerTable.AddRow(new List<object> { "NotExecuted", tr.ResultSummary.Counters.notExecuted == 0 ? tr.ResultSummary.Counters.total - (tr.ResultSummary.Counters.passed + tr.ResultSummary.Counters.failed) : tr.ResultSummary.Counters.notExecuted });
-            headerTable.AddRow(new List<object> { Passed, tr.ResultSummary.Counters.passed});
+            headerTable.AddRow(new List<object> { Passed, tr.ResultSummary.Counters.passed });
             headerTable.AddRow(new List<object> { Failed, tr.ResultSummary.Counters.failed });
             headerTable.AddRow(new List<object> { "Inconclusive", tr.ResultSummary.Counters.inconclusive });
             headerTable.AddRow(new List<object> { "Pending", tr.ResultSummary.Counters.pending });
@@ -151,7 +154,7 @@ namespace ReporTrx
                 foreach (var item in c)
                 {
                     i++;
-                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } } );
+                    resultsTable.AddRow(new List<object> { i, item.Name, item.Outcome, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
         }

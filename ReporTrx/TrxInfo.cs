@@ -6,7 +6,6 @@
     [System.Xml.Serialization.XmlRootAttribute(Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010", IsNullable = false)]
     public partial class TestRun
     {
-
         private TestRunTimes timesField;
 
         private TestRunTestSettings testSettingsField;
@@ -29,129 +28,69 @@
 
         public TestRunTimes Times
         {
-            get
-            {
-                return this.timesField;
-            }
-            set
-            {
-                this.timesField = value;
-            }
+            get => this.timesField;
+            set => this.timesField = value;
         }
 
         public TestRunTestSettings TestSettings
         {
-            get
-            {
-                return this.testSettingsField;
-            }
-            set
-            {
-                this.testSettingsField = value;
-            }
+            get => this.testSettingsField;
+            set => this.testSettingsField = value;
         }
 
         [System.Xml.Serialization.XmlArrayItemAttribute("UnitTestResult", IsNullable = false)]
         public TestRunUnitTestResult[] Results
         {
-            get
-            {
-                return this.resultsField;
-            }
-            set
-            {
-                this.resultsField = value;
-            }
+            get => this.resultsField;
+            set => this.resultsField = value;
         }
 
         [System.Xml.Serialization.XmlArrayItemAttribute("UnitTest", IsNullable = false)]
         public TestRunUnitTest[] TestDefinitions
         {
-            get
-            {
-                return this.testDefinitionsField;
-            }
-            set
-            {
-                this.testDefinitionsField = value;
-            }
+            get => this.testDefinitionsField;
+            set => this.testDefinitionsField = value;
         }
 
         [System.Xml.Serialization.XmlArrayItemAttribute("TestEntry", IsNullable = false)]
         public TestRunTestEntry[] TestEntries
         {
-            get
-            {
-                return this.testEntriesField;
-            }
-            set
-            {
-                this.testEntriesField = value;
-            }
+            get => this.testEntriesField;
+            set => this.testEntriesField = value;
         }
 
         [System.Xml.Serialization.XmlArrayItemAttribute("TestList", IsNullable = false)]
         public TestRunTestList[] TestLists
         {
-            get
-            {
-                return this.testListsField;
-            }
-            set
-            {
-                this.testListsField = value;
-            }
+            get => this.testListsField;
+            set => this.testListsField = value;
         }
 
         public TestRunResultSummary ResultSummary
         {
-            get
-            {
-                return this.resultSummaryField;
-            }
-            set
-            {
-                this.resultSummaryField = value;
-            }
+            get => this.resultSummaryField;
+            set => this.resultSummaryField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string id
         {
-            get
-            {
-                return this.idField;
-            }
-            set
-            {
-                this.idField = value;
-            }
+            get => this.idField;
+            set => this.idField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string name
         {
-            get
-            {
-                return this.nameField;
-            }
-            set
-            {
-                this.nameField = value;
-            }
+            get => this.nameField;
+            set => this.nameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string runUser
         {
-            get
-            {
-                return this.runUserField;
-            }
-            set
-            {
-                this.runUserField = value;
-            }
+            get => this.runUserField;
+            set => this.runUserField = value;
         }
     }
 
@@ -160,7 +99,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunTimes
     {
-
         private System.DateTime creationField;
 
         private System.DateTime queuingField;
@@ -172,53 +110,29 @@
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime creation
         {
-            get
-            {
-                return this.creationField;
-            }
-            set
-            {
-                this.creationField = value;
-            }
+            get => this.creationField;
+            set => this.creationField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime queuing
         {
-            get
-            {
-                return this.queuingField;
-            }
-            set
-            {
-                this.queuingField = value;
-            }
+            get => this.queuingField;
+            set => this.queuingField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime start
         {
-            get
-            {
-                return this.startField;
-            }
-            set
-            {
-                this.startField = value;
-            }
+            get => this.startField;
+            set => this.startField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime finish
         {
-            get
-            {
-                return this.finishField;
-            }
-            set
-            {
-                this.finishField = value;
-            }
+            get => this.finishField;
+            set => this.finishField = value;
         }
     }
 
@@ -227,7 +141,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunTestSettings
     {
-
         private TestRunTestSettingsDeployment deploymentField;
 
         private string nameField;
@@ -236,40 +149,22 @@
 
         public TestRunTestSettingsDeployment Deployment
         {
-            get
-            {
-                return this.deploymentField;
-            }
-            set
-            {
-                this.deploymentField = value;
-            }
+            get => this.deploymentField;
+            set => this.deploymentField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string name
         {
-            get
-            {
-                return this.nameField;
-            }
-            set
-            {
-                this.nameField = value;
-            }
+            get => this.nameField;
+            set => this.nameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string id
         {
-            get
-            {
-                return this.idField;
-            }
-            set
-            {
-                this.idField = value;
-            }
+            get => this.idField;
+            set => this.idField = value;
         }
     }
 
@@ -278,20 +173,13 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunTestSettingsDeployment
     {
-
         private string runDeploymentRootField;
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string runDeploymentRoot
         {
-            get
-            {
-                return this.runDeploymentRootField;
-            }
-            set
-            {
-                this.runDeploymentRootField = value;
-            }
+            get => this.runDeploymentRootField;
+            set => this.runDeploymentRootField = value;
         }
     }
 
@@ -300,7 +188,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTestResult
     {
-
         private TestRunUnitTestResultOutput outputField;
 
         private string executionIdField;
@@ -327,157 +214,85 @@
 
         public TestRunUnitTestResultOutput Output
         {
-            get
-            {
-                return this.outputField;
-            }
-            set
-            {
-                this.outputField = value;
-            }
+            get => this.outputField;
+            set => this.outputField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string executionId
         {
-            get
-            {
-                return this.executionIdField;
-            }
-            set
-            {
-                this.executionIdField = value;
-            }
+            get => this.executionIdField;
+            set => this.executionIdField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testId
         {
-            get
-            {
-                return this.testIdField;
-            }
-            set
-            {
-                this.testIdField = value;
-            }
+            get => this.testIdField;
+            set => this.testIdField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testName
         {
-            get
-            {
-                return this.testNameField;
-            }
-            set
-            {
-                this.testNameField = value;
-            }
+            get => this.testNameField;
+            set => this.testNameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string computerName
         {
-            get
-            {
-                return this.computerNameField;
-            }
-            set
-            {
-                this.computerNameField = value;
-            }
+            get => this.computerNameField;
+            set => this.computerNameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute(DataType = "time")]
         public System.DateTime duration
         {
-            get
-            {
-                return this.durationField;
-            }
-            set
-            {
-                this.durationField = value;
-            }
+            get => this.durationField;
+            set => this.durationField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime startTime
         {
-            get
-            {
-                return this.startTimeField;
-            }
-            set
-            {
-                this.startTimeField = value;
-            }
+            get => this.startTimeField;
+            set => this.startTimeField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime endTime
         {
-            get
-            {
-                return this.endTimeField;
-            }
-            set
-            {
-                this.endTimeField = value;
-            }
+            get => this.endTimeField;
+            set => this.endTimeField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testType
         {
-            get
-            {
-                return this.testTypeField;
-            }
-            set
-            {
-                this.testTypeField = value;
-            }
+            get => this.testTypeField;
+            set => this.testTypeField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string outcome
         {
-            get
-            {
-                return this.outcomeField;
-            }
-            set
-            {
-                this.outcomeField = value;
-            }
+            get => this.outcomeField;
+            set => this.outcomeField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testListId
         {
-            get
-            {
-                return this.testListIdField;
-            }
-            set
-            {
-                this.testListIdField = value;
-            }
+            get => this.testListIdField;
+            set => this.testListIdField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string relativeResultsDirectory
         {
-            get
-            {
-                return this.relativeResultsDirectoryField;
-            }
-            set
-            {
-                this.relativeResultsDirectoryField = value;
-            }
+            get => this.relativeResultsDirectoryField;
+            set => this.relativeResultsDirectoryField = value;
         }
     }
 
@@ -486,33 +301,20 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTestResultOutput
     {
-
         private string stdOutField;
 
         private TestRunUnitTestResultOutputErrorInfo errorInfoField;
 
         public string StdOut
         {
-            get
-            {
-                return this.stdOutField;
-            }
-            set
-            {
-                this.stdOutField = value;
-            }
+            get => this.stdOutField;
+            set => this.stdOutField = value;
         }
 
         public TestRunUnitTestResultOutputErrorInfo ErrorInfo
         {
-            get
-            {
-                return this.errorInfoField;
-            }
-            set
-            {
-                this.errorInfoField = value;
-            }
+            get => this.errorInfoField;
+            set => this.errorInfoField = value;
         }
     }
 
@@ -521,33 +323,20 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTestResultOutputErrorInfo
     {
-
         private string messageField;
 
         private string stackTraceField;
 
         public string Message
         {
-            get
-            {
-                return this.messageField;
-            }
-            set
-            {
-                this.messageField = value;
-            }
+            get => this.messageField;
+            set => this.messageField = value;
         }
 
         public string StackTrace
         {
-            get
-            {
-                return this.stackTraceField;
-            }
-            set
-            {
-                this.stackTraceField = value;
-            }
+            get => this.stackTraceField;
+            set => this.stackTraceField = value;
         }
     }
 
@@ -556,7 +345,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTest
     {
-
         private TestRunUnitTestExecution executionField;
 
         private TestRunUnitTestTestMethod testMethodField;
@@ -569,65 +357,35 @@
 
         public TestRunUnitTestExecution Execution
         {
-            get
-            {
-                return this.executionField;
-            }
-            set
-            {
-                this.executionField = value;
-            }
+            get => this.executionField;
+            set => this.executionField = value;
         }
 
         public TestRunUnitTestTestMethod TestMethod
         {
-            get
-            {
-                return this.testMethodField;
-            }
-            set
-            {
-                this.testMethodField = value;
-            }
+            get => this.testMethodField;
+            set => this.testMethodField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string name
         {
-            get
-            {
-                return this.nameField;
-            }
-            set
-            {
-                this.nameField = value;
-            }
+            get => this.nameField;
+            set => this.nameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string storage
         {
-            get
-            {
-                return this.storageField;
-            }
-            set
-            {
-                this.storageField = value;
-            }
+            get => this.storageField;
+            set => this.storageField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string id
         {
-            get
-            {
-                return this.idField;
-            }
-            set
-            {
-                this.idField = value;
-            }
+            get => this.idField;
+            set => this.idField = value;
         }
     }
 
@@ -636,20 +394,13 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTestExecution
     {
-
         private string idField;
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string id
         {
-            get
-            {
-                return this.idField;
-            }
-            set
-            {
-                this.idField = value;
-            }
+            get => this.idField;
+            set => this.idField = value;
         }
     }
 
@@ -658,7 +409,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunUnitTestTestMethod
     {
-
         private string codeBaseField;
 
         private string adapterTypeNameField;
@@ -670,53 +420,29 @@
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string codeBase
         {
-            get
-            {
-                return this.codeBaseField;
-            }
-            set
-            {
-                this.codeBaseField = value;
-            }
+            get => this.codeBaseField;
+            set => this.codeBaseField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string adapterTypeName
         {
-            get
-            {
-                return this.adapterTypeNameField;
-            }
-            set
-            {
-                this.adapterTypeNameField = value;
-            }
+            get => this.adapterTypeNameField;
+            set => this.adapterTypeNameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string className
         {
-            get
-            {
-                return this.classNameField;
-            }
-            set
-            {
-                this.classNameField = value;
-            }
+            get => this.classNameField;
+            set => this.classNameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string name
         {
-            get
-            {
-                return this.nameField;
-            }
-            set
-            {
-                this.nameField = value;
-            }
+            get => this.nameField;
+            set => this.nameField = value;
         }
     }
 
@@ -725,7 +451,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunTestEntry
     {
-
         private string testIdField;
 
         private string executionIdField;
@@ -735,40 +460,22 @@
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testId
         {
-            get
-            {
-                return this.testIdField;
-            }
-            set
-            {
-                this.testIdField = value;
-            }
+            get => this.testIdField;
+            set => this.testIdField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string executionId
         {
-            get
-            {
-                return this.executionIdField;
-            }
-            set
-            {
-                this.executionIdField = value;
-            }
+            get => this.executionIdField;
+            set => this.executionIdField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string testListId
         {
-            get
-            {
-                return this.testListIdField;
-            }
-            set
-            {
-                this.testListIdField = value;
-            }
+            get => this.testListIdField;
+            set => this.testListIdField = value;
         }
     }
 
@@ -777,7 +484,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunTestList
     {
-
         private string nameField;
 
         private string idField;
@@ -785,27 +491,15 @@
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string name
         {
-            get
-            {
-                return this.nameField;
-            }
-            set
-            {
-                this.nameField = value;
-            }
+            get => this.nameField;
+            set => this.nameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string id
         {
-            get
-            {
-                return this.idField;
-            }
-            set
-            {
-                this.idField = value;
-            }
+            get => this.idField;
+            set => this.idField = value;
         }
     }
 
@@ -814,7 +508,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunResultSummary
     {
-
         private TestRunResultSummaryCounters countersField;
 
         private TestRunResultSummaryOutput outputField;
@@ -825,52 +518,28 @@
 
         public TestRunResultSummaryCounters Counters
         {
-            get
-            {
-                return this.countersField;
-            }
-            set
-            {
-                this.countersField = value;
-            }
+            get => this.countersField;
+            set => this.countersField = value;
         }
 
         public TestRunResultSummaryOutput Output
         {
-            get
-            {
-                return this.outputField;
-            }
-            set
-            {
-                this.outputField = value;
-            }
+            get => this.outputField;
+            set => this.outputField = value;
         }
 
         [System.Xml.Serialization.XmlArrayItemAttribute("RunInfo", IsNullable = false)]
         public TestRunResultSummaryRunInfo[] RunInfos
         {
-            get
-            {
-                return this.runInfosField;
-            }
-            set
-            {
-                this.runInfosField = value;
-            }
+            get => this.runInfosField;
+            set => this.runInfosField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string outcome
         {
-            get
-            {
-                return this.outcomeField;
-            }
-            set
-            {
-                this.outcomeField = value;
-            }
+            get => this.outcomeField;
+            set => this.outcomeField = value;
         }
     }
 
@@ -879,245 +548,148 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunResultSummaryCounters
     {
+        private uint totalField;
 
-        private ushort totalField;
+        private uint executedField;
 
-        private ushort executedField;
+        private int passedField;
 
-        private byte passedField;
+        private int failedField;
 
-        private byte failedField;
+        private int errorField;
 
-        private byte errorField;
+        private int timeoutField;
 
-        private byte timeoutField;
+        private int abortedField;
 
-        private byte abortedField;
+        private int inconclusiveField;
 
-        private byte inconclusiveField;
+        private int passedButRunAbortedField;
 
-        private byte passedButRunAbortedField;
+        private int notRunnableField;
 
-        private byte notRunnableField;
+        private int notExecutedField;
 
-        private byte notExecutedField;
+        private int disconnectedField;
 
-        private byte disconnectedField;
+        private int warningField;
 
-        private byte warningField;
+        private int completedField;
 
-        private byte completedField;
+        private int inProgressField;
 
-        private byte inProgressField;
-
-        private byte pendingField;
+        private int pendingField;
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public ushort total
+        public uint total
         {
-            get
-            {
-                return this.totalField;
-            }
-            set
-            {
-                this.totalField = value;
-            }
+            get => this.totalField;
+            set => this.totalField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public ushort executed
+        public uint executed
         {
-            get
-            {
-                return this.executedField;
-            }
-            set
-            {
-                this.executedField = value;
-            }
+            get => this.executedField;
+            set => this.executedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte passed
+        public int passed
         {
-            get
-            {
-                return this.passedField;
-            }
-            set
-            {
-                this.passedField = value;
-            }
+            get => this.passedField;
+            set => this.passedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte failed
+        public int failed
         {
-            get
-            {
-                return this.failedField;
-            }
-            set
-            {
-                this.failedField = value;
-            }
+            get => this.failedField;
+            set => this.failedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte error
+        public int error
         {
-            get
-            {
-                return this.errorField;
-            }
-            set
-            {
-                this.errorField = value;
-            }
+            get => this.errorField;
+            set => this.errorField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte timeout
+        public int timeout
         {
-            get
-            {
-                return this.timeoutField;
-            }
-            set
-            {
-                this.timeoutField = value;
-            }
+            get => this.timeoutField;
+            set => this.timeoutField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte aborted
+        public int aborted
         {
-            get
-            {
-                return this.abortedField;
-            }
-            set
-            {
-                this.abortedField = value;
-            }
+            get => this.abortedField;
+            set => this.abortedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte inconclusive
+        public int inconclusive
         {
-            get
-            {
-                return this.inconclusiveField;
-            }
-            set
-            {
-                this.inconclusiveField = value;
-            }
+            get => this.inconclusiveField;
+            set => this.inconclusiveField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte passedButRunAborted
+        public int passedButRunAborted
         {
-            get
-            {
-                return this.passedButRunAbortedField;
-            }
-            set
-            {
-                this.passedButRunAbortedField = value;
-            }
+            get => this.passedButRunAbortedField;
+            set => this.passedButRunAbortedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte notRunnable
+        public int notRunnable
         {
-            get
-            {
-                return this.notRunnableField;
-            }
-            set
-            {
-                this.notRunnableField = value;
-            }
+            get => this.notRunnableField;
+            set => this.notRunnableField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte notExecuted
+        public int notExecuted
         {
-            get
-            {
-                return this.notExecutedField;
-            }
-            set
-            {
-                this.notExecutedField = value;
-            }
+            get => this.notExecutedField;
+            set => this.notExecutedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte disconnected
+        public int disconnected
         {
-            get
-            {
-                return this.disconnectedField;
-            }
-            set
-            {
-                this.disconnectedField = value;
-            }
+            get => this.disconnectedField;
+            set => this.disconnectedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte warning
+        public int warning
         {
-            get
-            {
-                return this.warningField;
-            }
-            set
-            {
-                this.warningField = value;
-            }
+            get => this.warningField;
+            set => this.warningField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte completed
+        public int completed
         {
-            get
-            {
-                return this.completedField;
-            }
-            set
-            {
-                this.completedField = value;
-            }
+            get => this.completedField;
+            set => this.completedField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte inProgress
+        public int inProgress
         {
-            get
-            {
-                return this.inProgressField;
-            }
-            set
-            {
-                this.inProgressField = value;
-            }
+            get => this.inProgressField;
+            set => this.inProgressField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte pending
+        public int pending
         {
-            get
-            {
-                return this.pendingField;
-            }
-            set
-            {
-                this.pendingField = value;
-            }
+            get => this.pendingField;
+            set => this.pendingField = value;
         }
     }
 
@@ -1126,19 +698,12 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunResultSummaryOutput
     {
-
         private string stdOutField;
 
         public string StdOut
         {
-            get
-            {
-                return this.stdOutField;
-            }
-            set
-            {
-                this.stdOutField = value;
-            }
+            get => this.stdOutField;
+            set => this.stdOutField = value;
         }
     }
 
@@ -1147,7 +712,6 @@
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true, Namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010")]
     public partial class TestRunResultSummaryRunInfo
     {
-
         private string textField;
 
         private string computerNameField;
@@ -1158,55 +722,29 @@
 
         public string Text
         {
-            get
-            {
-                return this.textField;
-            }
-            set
-            {
-                this.textField = value;
-            }
+            get => this.textField;
+            set => this.textField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string computerName
         {
-            get
-            {
-                return this.computerNameField;
-            }
-            set
-            {
-                this.computerNameField = value;
-            }
+            get => this.computerNameField;
+            set => this.computerNameField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public string outcome
         {
-            get
-            {
-                return this.outcomeField;
-            }
-            set
-            {
-                this.outcomeField = value;
-            }
+            get => this.outcomeField;
+            set => this.outcomeField = value;
         }
 
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public System.DateTime timestamp
         {
-            get
-            {
-                return this.timestampField;
-            }
-            set
-            {
-                this.timestampField = value;
-            }
+            get => this.timestampField;
+            set => this.timestampField = value;
         }
     }
-
-
 }
