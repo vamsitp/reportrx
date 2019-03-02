@@ -72,7 +72,6 @@ namespace ReporTrx
 
         private static void GenerateHtml()
         {
-            var init = new StringBuilder("$(document).ready(function() {");
             CreateDoc();
             var results = tr.Results.ToList();
             var defs = tr.TestDefinitions.ToList();
@@ -83,8 +82,7 @@ namespace ReporTrx
                 return item;
             }).GroupBy(x => x.Class).OrderBy(x => x.Key);
 
-            PopulateTables(init, results, defs, classes);
-            doc.AddJavaScript(init.Append(" } );").ToString()).Attr("class", "init");
+            PopulateTables(results, defs, classes);
         }
 
         private static void CreateDoc()
@@ -95,21 +93,23 @@ namespace ReporTrx
             doc.Head.Add("style").Attr("class", "init").Attr("type", TypeCss);
             doc.Head.Add(Script).Attr(Language, JavaScript).Attr(Src, "https://code.jquery.com/jquery-3.3.1.min.js").Attr("type", TypeJavaScript);
             doc.Head.Add(Script).Attr(Language, JavaScript).Attr(Src, "https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js").Attr("type", TypeJavaScript);
+            var init = "$(document).ready(function() { $('table.display').DataTable({ \"lengthMenu\": [[-1, 50, 25, 10], [\"All\", 50, 25, 10]] }); } );";
+            doc.AddJavaScript(init).Attr("class", "init");
         }
 
-        private static void PopulateTables(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateTables(List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
         {
-            PopulateSummaryTable(init, results, defs);
-            PopulateOverviewTable(init, classes);
-            PopulateErrorsTable(init, results);
-            PopulateSlowestTable(init, results, defs);
-            PopulateRedundantTable(init, results);
-            PopulateAllResultsTable(init, classes);
+            PopulateSummaryTable(results, defs);
+            PopulateOverviewTable(classes);
+            PopulateErrorsTable(results);
+            PopulateSlowestTable(results, defs);
+            PopulateRedundantTable(results);
+            PopulateAllResultsTable(classes);
         }
-        private static void PopulateSummaryTable(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
+        private static void PopulateSummaryTable(List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
         {
             AddTag(H2, "SUMMARY");
-            var summaryTable = AddTag(Table).ToDataTable("summaryTable", init);
+            var summaryTable = AddTag(Table).ToDataTable("summaryTable");
             summaryTable.AddRow(new List<object> { "KEY", "VALUE" }, true);
             var summaryBody = summaryTable.Add(TBody);
             summaryBody.AddRow(new List<object> { "Name", tr.name });
@@ -131,10 +131,10 @@ namespace ReporTrx
             summaryBody.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
         }
 
-        private static void PopulateOverviewTable(StringBuilder init, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateOverviewTable(IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
         {
             AddTag(H2, "OVERVIEW");
-            var overviewTable = AddTag(Table).ToDataTable("overviewTable", init);
+            var overviewTable = AddTag(Table).ToDataTable("overviewTable");
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
             overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
@@ -147,11 +147,11 @@ namespace ReporTrx
             }
         }
 
-        private static void PopulateErrorsTable(StringBuilder init, List<TestRunUnitTestResult> results)
+        private static void PopulateErrorsTable(List<TestRunUnitTestResult> results)
         {
             var errors = results.Select(r => r.Output?.ErrorInfo?.Message).GroupBy(x => x).Where(x => !string.IsNullOrWhiteSpace(x.Key) && x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "TOP ERRORS");
-            var errorsTable = AddTag(Table).ToDataTable("errorsTable", init);
+            var errorsTable = AddTag(Table).ToDataTable("errorsTable");
             errorsTable.AddRow(new List<object> { "#", "ERROR", "OCCURENCES" }, true);
             var errorsBody = errorsTable.Add(TBody);
             var i = 0;
@@ -162,11 +162,11 @@ namespace ReporTrx
             }
         }
 
-        private static void PopulateSlowestTable(StringBuilder init, List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
+        private static void PopulateSlowestTable(List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs)
         {
             var slowest = results.OrderByDescending(r => r.duration.TimeOfDay.TotalMinutes).Where(s => s.duration.TimeOfDay.TotalMinutes > TopSlowestThresholdInMins);
             AddTag(H2, "TOP SLOWEST");
-            var slowestTable = AddTag(Table).ToDataTable("slowestTable", init);
+            var slowestTable = AddTag(Table).ToDataTable("slowestTable");
             slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
             var slowestBody = slowestTable.Add(TBody);
             var i = 0;
@@ -178,11 +178,11 @@ namespace ReporTrx
             }
         }
 
-        private static void PopulateRedundantTable(StringBuilder init, List<TestRunUnitTestResult> results)
+        private static void PopulateRedundantTable(List<TestRunUnitTestResult> results)
         {
             var redundantTests = results.GroupBy(r => r.testName).Where(x => x.Count() > 1).OrderByDescending(z => z.Count());
             AddTag(H2, "REDUNDANT RESULTS");
-            var redundantsTable = AddTag(Table).ToDataTable("redundantsTable", init);
+            var redundantsTable = AddTag(Table).ToDataTable("redundantsTable");
             redundantsTable.AddRow(new List<object> { "#", "TEST", "COUNT" }, true);
             var i = 0;
             var redundantsBody = redundantsTable.Add(TBody);
@@ -193,7 +193,7 @@ namespace ReporTrx
             }
         }
 
-        private static void PopulateAllResultsTable(StringBuilder init, IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateAllResultsTable(IOrderedEnumerable<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
         {
             AddTag(H2, "ALL RESULTS");
             var j = 0;
@@ -202,7 +202,7 @@ namespace ReporTrx
                 j++;
                 var tag = AddTag(H3, $"{j}. {c.Key} ({(100 * c.Count(x => x.Outcome.Equals(Passed))) / c.Count()}% Pass)");
                 tag.Id(c.Key);
-                var resultsTable = AddTag(Table).ToDataTable($"resultsTable_{c.Key}", init);
+                var resultsTable = AddTag(Table).ToDataTable($"resultsTable_{c.Key}");
 
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
                 resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);

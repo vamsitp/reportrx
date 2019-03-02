@@ -17,10 +17,7 @@
         private const string Anchor = "a";
         private const string THead = "thead";
         private const string HRef = "href";
-        private const string DataTable = " $(\"#{0}\").DataTable({{ \"lengthMenu\": [[-1, 50, 25], [\"All\", 50, 25]] }});";
-        private const string DisplayCompact = "display compact";
-        private const string Width = "width";
-        private const string Cent = "100%";
+        private const string DisplayCompact = "display cell-border";
 
         private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
         private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -32,7 +29,7 @@
             { "Pending", "gray" },
             { "Warning", "orange" },
             { "Timeout", "orange" },
-            { Cent, "green" },
+            { "100%", "green" },
             { "0%", "red" }
         };
 
@@ -74,11 +71,10 @@
             }
         }
 
-        public static HtmlTag ToDataTable(this HtmlTag table, string id, StringBuilder initScript)
+        public static HtmlTag ToDataTable(this HtmlTag table, string id)
         {
             id = id.Replace(".", "_");
-            initScript.AppendFormat(DataTable, id);
-            table.AddClass(DisplayCompact).AddStyle(Width, Cent); // .AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
+            table.AddClass(DisplayCompact); // .AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
             return table.Id(id);
         }
 
