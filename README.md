@@ -2,8 +2,6 @@
 
 > TRX to HTML Report
 
-![Snapshot](Snapshot.png)
-
 #### FEATURES
 - Test Execution Summary
 - Top Errors (with counts)
@@ -15,3 +13,5 @@
 
 #### USAGE
 `reportrx.exe "path-to-trx-file-or-folder"`
+
+![Snapshot](Snapshot.png)
