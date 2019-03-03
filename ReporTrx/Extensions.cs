@@ -2,43 +2,18 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Configuration;
     using System.Linq;
-    using System.Text;
 
     using HtmlTags;
 
     public static class Extensions
     {
-        private const string Tr = "tr";
-        private const string Th = "th";
-        private const string Td = "td";
-        private const string Font = "font";
-        private const string Anchor = "a";
-        private const string THead = "thead";
-        private const string HRef = "href";
-        private const string DisplayCompact = "display cell-border";
-
-        private static readonly bool ColorEntireRow = bool.Parse(ConfigurationManager.AppSettings[nameof(ColorEntireRow)]);
-        private static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "Passed", "green" },
-            { "Failed", "red" },
-            { "NotExecuted", "gray" },
-            { "Inconclusive", "gray" },
-            { "Pending", "gray" },
-            { "Warning", "orange" },
-            { "Timeout", "orange" },
-            { "100%", "green" },
-            { "0%", "red" }
-        };
-
         public static void AddRow(this HtmlTag table, IEnumerable<object> cols, bool header = false, Dictionary<int, string> ids = null, Dictionary<int, string> anchors = null)
         {
-            var row = new HtmlTag(Tr);
+            var row = new HtmlTag(Constants.Tr);
             if (header)
             {
-                var thead = table.Add(THead);
+                var thead = table.Add(Constants.THead);
                 thead.Children.Add(row);
             }
             else
@@ -50,18 +25,18 @@
             {
                 var c = cols.ElementAt(i);
                 var val = c?.ToString();
-                var col = row.Add(header ? Th : Td);
-                col.AddClass("cell expand-maximum-on-hover"); //.AddStyle("word-break", "break-all");
+                var col = row.Add(header ? Constants.Th : Constants.Td);
+                col.AddClass(Constants.CellStyle);
                 if (anchors?.ContainsKey(i) == true)
                 {
-                    var anchor = new HtmlTag(Anchor);
-                    anchor.Attr(HRef, $"#{anchors[i]}");
+                    var anchor = new HtmlTag(Constants.Anchor);
+                    anchor.Attr(Constants.HRef, $"#{anchors[i]}");
                     anchor.Text(val);
                     col.Children.Add(anchor);
                 }
                 else
                 {
-                    col.ColoredText(val ?? string.Empty, ColorEntireRow ? cols : null);
+                    col.ColoredText(val ?? string.Empty, Constants.ColorEntireRow ? cols : null);
                 }
 
                 if (ids?.ContainsKey(i) == true)
@@ -74,7 +49,7 @@
         public static HtmlTag ToDataTable(this HtmlTag table, string id)
         {
             id = id.Replace(".", "_");
-            table.AddClass(DisplayCompact); // .AddStyle("table-layout", "fixed").AddStyle("word-wrap", "break-word");
+            table.AddClass(Constants.TableStyle);
             return table.Id(id);
         }
 
@@ -101,21 +76,21 @@
                 string color = null;
                 if (siblings != null)
                 {
-                    var sibling = siblings?.SingleOrDefault(x => x != null && OutputColors.ContainsKey(x.ToString()));
+                    var sibling = siblings?.SingleOrDefault(x => x != null && Constants.OutputColors.ContainsKey(x.ToString()));
                     if (sibling != null)
                     {
-                        color = OutputColors[sibling.ToString()];
+                        color = Constants.OutputColors[sibling.ToString()];
                     }
                 }
 
-                if (color == null && OutputColors.ContainsKey(text))
+                if (color == null && Constants.OutputColors.ContainsKey(text))
                 {
-                    color = OutputColors[text];
+                    color = Constants.OutputColors[text];
                 }
 
                 if (color != null)
                 {
-                    var font = new HtmlTag(Font);
+                    var font = new HtmlTag(Constants.Font);
                     font.Attr(nameof(color), color);
                     font.Text(text);
                     tag.Children.Add(font);
@@ -125,6 +100,16 @@
                     tag.Text(text);
                 }
             }
+        }
+
+        public static string ToMinutesString(this TimeSpan duration)
+        {
+            return duration.TotalMinutes.ToMinutesString();
+        }
+
+        public static string ToMinutesString(this double duration)
+        {
+            return duration.ToString(Constants.N2) + Constants.Mins;
         }
     }
 }
