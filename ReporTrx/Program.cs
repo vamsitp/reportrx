@@ -1,9 +1,11 @@
 namespace ReporTrx
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.Xml.Serialization;
 
     using HtmlTags;
@@ -14,6 +16,7 @@ namespace ReporTrx
     {
         private static TestRun tr;
         private static HtmlDocument doc;
+        private static readonly ConcurrentDictionary<string, List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>> TestsPerAssembly = new ConcurrentDictionary<string, List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>>();
 
         private static void Main(string[] args)
         {
@@ -59,7 +62,8 @@ namespace ReporTrx
             var classes = results.Select(r =>
             {
                 var def = GetTestDefMatch(r, defs);
-                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration) item = (def.TestMethod.codeBase, def.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
+                var owner = GetOwner(def.TestMethod.codeBase, r.testName);
+                (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration, string Owner) item = (def.TestMethod.codeBase, def.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay, owner);
                 return item;
             });
 
@@ -79,7 +83,7 @@ namespace ReporTrx
             doc.AddJavaScript(init).Attr("class", "init");
         }
 
-        private static void PopulateTables(List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs, List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateTables(List<TestRunUnitTestResult> results, List<TestRunUnitTest> defs, List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration, string Owner)>> classes)
         {
             PopulateSummaryTable(results, defs);
             PopulateOverviewTable(classes);
@@ -114,19 +118,19 @@ namespace ReporTrx
             summaryBody.AddRow(new List<object> { "Warnings", tr.ResultSummary.Counters.warning });
         }
 
-        private static void PopulateOverviewTable(List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateOverviewTable(List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration, string Owner)>> classes)
         {
             AddTag(Constants.H2, $"OVERVIEW ({classes.Count})");
             var overviewTable = AddTag(Constants.Table).ToDataTable("overviewTable");
 
             // overviewTable.AddRow(new List<object> { "#", "CLASS", $"TOTAL ({classes.Sum(x => x.Count())})", $"PASSED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Passed")))})", $"FAILED ({classes.Sum(x => x.Count(y => y.Outcome.Equals("Failed")))})", "PASS %" }, true);
-            overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION" }, true);
+            overviewTable.AddRow(new List<object> { "#", "CLASS", "TOTAL", "PASSED", "FAILED", "PASS %", "DURATION", "OWNER" }, true);
             var overviewBody = overviewTable.Add(Constants.TBody);
             var i = 0;
             foreach (var c in classes)
             {
                 i++;
-                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Constants.Passed)), c.Count(x => x.Outcome.Equals(Constants.Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Constants.Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToMinutesString() }, anchors: new Dictionary<int, string> { { 1, c.Key } });
+                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Constants.Passed)), c.Count(x => x.Outcome.Equals(Constants.Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Constants.Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToMinutesString(), string.Join(Constants.Space, c.Select(o => o.Owner).Distinct()) }, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
         }
 
@@ -176,7 +180,7 @@ namespace ReporTrx
             }
         }
 
-        private static void PopulateAllResultsTable(List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration)>> classes)
+        private static void PopulateAllResultsTable(List<IGrouping<string, (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration, string Owner)>> classes)
         {
             AddTag(Constants.H2, "ALL RESULTS");
             var j = 0;
@@ -188,13 +192,13 @@ namespace ReporTrx
                 var resultsTable = AddTag(Constants.Table).ToDataTable($"resultsTable_{c.Key}");
 
                 // resultsTable.Id(nameof(resultsTable) + "_" + c.Key);
-                resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "ERROR", "TRACE" }, true);
+                resultsTable.AddRow(new List<object> { "#", "NAME", "OUTCOME", "DURATION", "OWNER", "ERROR", "TRACE" }, true);
                 var i = 0;
                 var resultsBody = resultsTable.Add(Constants.TBody);
                 foreach (var item in c)
                 {
                     i++;
-                    resultsBody.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.ToMinutesString(), item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
+                    resultsBody.AddRow(new List<object> { i, item.Name, item.Outcome, item.Duration.ToMinutesString(), item.Owner, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.Name } });
                 }
             }
         }
@@ -232,6 +236,49 @@ namespace ReporTrx
             }
 
             return node;
+        }
+
+        private static string GetOwner(string testAssemblyPath, string testName)
+        {
+            const string ownerPrefix = "owner=";
+            var tests = TestsPerAssembly.GetOrAdd(testAssemblyPath, k =>
+            {
+                var testAssembly = Assembly.LoadFrom(testAssemblyPath);
+                var types = testAssembly.GetTypes().Where(x => x.Name.EndsWith("Feature", StringComparison.OrdinalIgnoreCase));
+
+                // var methods = types.SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")));
+                var methods = types.Select(x =>
+                new
+                {
+                    Owner = x.CustomAttributes?.FirstOrDefault(y => y.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true)?.ConstructorArguments?.FirstOrDefault().Value?.ToString().Replace(ownerPrefix, string.Empty),
+                    Methods = x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")))
+                });
+
+                var cad = new List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>();
+                foreach (var m in methods)
+                {
+                    cad.AddRange(m.Methods.Select(x =>
+                    {
+                        var desc = x.CustomAttributes?.FirstOrDefault(y => y?.AttributeType.Name.Contains("DescriptionAttribute") == true);
+                        var cat = x.CustomAttributes?.FirstOrDefault(y => y?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true);
+                        var ownr = cat?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.Replace(ownerPrefix, string.Empty) ?? m.Owner;
+                        var item = (Namespace: x.ReflectedType.Namespace, Feature: x.ReflectedType.Name, TestName: x.Name, Scenario: desc?.ConstructorArguments?.FirstOrDefault().Value?.ToString(), Owner: ownr);
+                        return item;
+                    }).ToList());
+                }
+
+                return cad;
+            });
+
+            var owners = tests.Where(t => t.TestName.Equals(testName.Split('(').FirstOrDefault())).Select(x => x.Owner).Distinct().ToList();
+            if (owners.Count > 1)
+            {
+                Console.WriteLine(string.Empty);
+                Log.Warning($"Multiple ({owners.Count}) owners found for {testName}");
+                owners.ForEach(o => Log.Warning($"\t- {o}"));
+            }
+
+            return string.Join(Constants.Space, owners);
         }
 
         private static void Save(string file)

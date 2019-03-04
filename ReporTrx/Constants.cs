@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Reflection;
 
     public static class Constants
     {
@@ -29,6 +30,8 @@
         public const string Passed = "Passed";
 
         public const string Script = "script";
+
+        public const string Space = " ";
 
         public const string Src = "src";
 
