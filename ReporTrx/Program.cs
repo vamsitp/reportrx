@@ -61,9 +61,10 @@ namespace ReporTrx
                 var def = GetTestDefMatch(r, defs);
                 (string Assembly, string Class, string Name, string Outcome, string Error, string Trace, TimeSpan Duration) item = (def.TestMethod.codeBase, def.TestMethod.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
                 return item;
-            }).GroupBy(x => x.Class).OrderBy(x => x.Key).ToList();
+            });
 
-            PopulateTables(results, defs, classes);
+            var groupedClasses = classes.GroupBy(x => x.Class).OrderBy(x => x.Key).ToList();
+            PopulateTables(results, defs, groupedClasses);
         }
 
         private static void CreateDoc()
@@ -95,6 +96,7 @@ namespace ReporTrx
             var summaryBody = summaryTable.Add(Constants.TBody);
             summaryBody.AddRow(new List<object> { "Name", tr.name });
             summaryBody.AddRow(new List<object> { "ID", tr.id });
+            summaryBody.AddRow(new List<object> { "User", tr.runUser });
             summaryBody.AddRow(new List<object> { "Outcome", tr.ResultSummary.outcome });
             summaryBody.AddRow(new List<object> { "Start", tr.Times.start });
             summaryBody.AddRow(new List<object> { "End", tr.Times.finish });
