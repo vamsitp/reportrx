@@ -102,6 +102,11 @@
             }
         }
 
+        public static double TotalMinutes(this TimeSpan? duration)
+        {
+            return duration.GetValueOrDefault(TimeSpan.Zero).TotalMinutes;
+        }
+
         public static string ToMinutesString(this TimeSpan duration)
         {
             return duration.TotalMinutes.ToMinutesString();

@@ -19,7 +19,7 @@ namespace ReporTrx
         private static List<TestResult> TestResults;
         private static List<IGrouping<string, TestResult>> TestResultsByClass;
 
-        private static readonly ConcurrentDictionary<string, List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>> TestsPerAssembly = new ConcurrentDictionary<string, List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>>();
+        private static readonly ConcurrentDictionary<string, List<TestResult>> TestsPerAssembly = new ConcurrentDictionary<string, List<TestResult>>();
 
         private static void Main(string[] args)
         {
@@ -51,6 +51,7 @@ namespace ReporTrx
         {
             Console.WriteLine();
             Log.Information($"Parsing: {file}");
+            var testAssemblyPathOverride = Constants.TestAssemblyPathOverride;
             var ser = new XmlSerializer(typeof(TestRun));
             using (var stream = File.Open(file, FileMode.Open))
             {
@@ -59,7 +60,8 @@ namespace ReporTrx
                 TestResults = tr.Results.Select(r =>
                 {
                     var def = GetTestDefMatch(r);
-                    var item = new TestResult(def?.TestMethod?.codeBase, def?.TestMethod?.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
+                    var assembly = string.IsNullOrWhiteSpace(testAssemblyPathOverride) ? def?.TestMethod?.codeBase : Path.Combine(testAssemblyPathOverride, Path.GetFileName(def?.TestMethod?.codeBase));
+                    var item = new TestResult(assembly, def?.TestMethod?.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
                     if (def != null)
                     {
                         SetOwner(item);
@@ -153,7 +155,7 @@ namespace ReporTrx
             foreach (var c in TestResultsByClass)
             {
                 i++;
-                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Constants.Passed)), c.Count(x => x.Outcome.Equals(Constants.Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Constants.Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes).ToMinutesString(), string.Join(Constants.Space, c.Select(o => o.Owner).Distinct()) }, anchors: new Dictionary<int, string> { { 1, c.Key } });
+                overviewBody.AddRow(new List<object> { i, c.Key, c.Count(), c.Count(x => x.Outcome.Equals(Constants.Passed)), c.Count(x => x.Outcome.Equals(Constants.Failed)), $"{(100 * c.Count(x => x.Outcome.Equals(Constants.Passed))) / c.Count()}%", c.Sum(x => x.Duration.TotalMinutes()).ToMinutesString(), string.Join(Constants.Space, c.Select(o => o.Owner).Distinct()) }, anchors: new Dictionary<int, string> { { 1, c.Key } });
             }
         }
 
@@ -192,7 +194,7 @@ namespace ReporTrx
 
         private static void PopulateSlowestTable()
         {
-            var slowest = TestResults.OrderByDescending(r => r.Duration.TotalMinutes).Where(s => s.Duration.TotalMinutes > Constants.TopSlowestThresholdInMins).ToList();
+            var slowest = TestResults.OrderByDescending(r => r.Duration.TotalMinutes()).Where(s => s.Duration.TotalMinutes() > Constants.TopSlowestThresholdInMins).ToList();
             AddTag(Constants.H2, $"TOP SLOWEST ({slowest.Count} > {Constants.TopSlowestThresholdInMins} MINS)");
             var slowestTable = AddTag(Constants.Table).ToDataTable("slowestTable");
             slowestTable.AddRow(new List<object> { "#", "TEST", "DURATION", "CLASS" }, true);
@@ -201,7 +203,7 @@ namespace ReporTrx
             foreach (var slow in slowest)
             {
                 i++;
-                slowestBody.AddRow(new List<object> { i, slow.TestName, slow.Duration.TotalMinutes.ToMinutesString(), slow.ClassName }, anchors: new Dictionary<int, string> { { 1, slow.TestName }, { 3, slow.ClassName } });
+                slowestBody.AddRow(new List<object> { i, slow.TestName, slow.Duration.TotalMinutes().ToMinutesString(), slow.ClassName }, anchors: new Dictionary<int, string> { { 1, slow.TestName }, { 3, slow.ClassName } });
             }
         }
 
@@ -238,7 +240,7 @@ namespace ReporTrx
                 foreach (var item in c)
                 {
                     i++;
-                    resultsBody.AddRow(new List<object> { i, item.TestName, item.Outcome, item.Duration.ToMinutesString(), item.Owner, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.TestName } });
+                    resultsBody.AddRow(new List<object> { i, item.TestName, item.Outcome, item.Duration.TotalMinutes().ToMinutesString(), item.Owner, item.Error, item.Trace }, ids: new Dictionary<int, string> { { 1, item.TestName } });
                 }
             }
         }
@@ -285,7 +287,7 @@ namespace ReporTrx
                     Methods = x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")))
                 });
 
-                var cad = new List<(string Namespace, string Feature, string TestName, string Scenario, string Owner)>();
+                var cad = new List<TestResult>();
                 foreach (var m in methods)
                 {
                     cad.AddRange(m.Methods.Select(x =>
@@ -293,7 +295,7 @@ namespace ReporTrx
                         var desc = x.CustomAttributes?.FirstOrDefault(y => y?.AttributeType.Name.Contains("DescriptionAttribute") == true);
                         var cat = x.CustomAttributes?.FirstOrDefault(y => y?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true);
                         var owner = cat?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.Replace(ownerPrefix, string.Empty) ?? m.Owner;
-                        var item = (Namespace: x.ReflectedType.Namespace, Feature: x.ReflectedType.Name, TestName: x.Name, Scenario: desc?.ConstructorArguments?.FirstOrDefault().Value?.ToString(), Owner: owner);
+                        var item = new TestResult(testResult.Assembly, x.ReflectedType.FullName, x.Name, owner: owner);
                         return item;
                     }).ToList());
                 }
@@ -301,7 +303,7 @@ namespace ReporTrx
                 return cad;
             });
 
-            var owners = tests.Where(t => t.TestName.Equals(testResult.TestName.Split('(').FirstOrDefault())).Select(x => x.Owner?.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+            var owners = tests.Where(t => t.TestName.Equals(testResult.TestName.Split('(').FirstOrDefault()) && t.ClassName.Equals(testResult.ClassName)).Select(x => x.Owner?.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
             testResult.Owner = string.Join(Constants.Space, owners);
             ////if (owners.Count > 1)
             ////{

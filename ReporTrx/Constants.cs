@@ -65,6 +65,8 @@
 
         public static readonly string TableStyle = ConfigurationManager.AppSettings[nameof(TableStyle)];
 
+        public static readonly string TestAssemblyPathOverride = ConfigurationManager.AppSettings[nameof(TestAssemblyPathOverride)];
+
         public static readonly int TopSlowestThresholdInMins = int.Parse(ConfigurationManager.AppSettings[nameof(TopSlowestThresholdInMins)]);
 
         public static readonly Dictionary<string, string> OutputColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
