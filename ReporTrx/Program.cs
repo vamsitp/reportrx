@@ -18,7 +18,6 @@ namespace ReporTrx
         private static TestRun tr;
         private static List<TestResult> TestResults;
         private static List<IGrouping<string, TestResult>> TestResultsByClass;
-
         private static readonly ConcurrentDictionary<string, List<TestResult>> TestsPerAssembly = new ConcurrentDictionary<string, List<TestResult>>();
 
         private static void Main(string[] args)
@@ -27,6 +26,7 @@ namespace ReporTrx
             try
             {
                 var path = args[0];
+                Console.WriteLine();
                 Log.Information($"Input: {path}");
                 var files = Directory.GetFiles(Path.GetDirectoryName(path), Path.GetFileName(path));
                 foreach (var file in files)
@@ -51,24 +51,26 @@ namespace ReporTrx
         {
             Console.WriteLine();
             Log.Information($"Parsing: {file}");
-            var testAssemblyPathOverride = Constants.TestAssemblyPathOverride;
+            Console.WriteLine();
+            var testAssemblyPathOverride = Constants.TestAssemblyFolderOverride;
             var ser = new XmlSerializer(typeof(TestRun));
             using (var stream = File.Open(file, FileMode.Open))
             {
                 tr = (TestRun)ser.Deserialize(stream);
                 var defNotFound = 1;
-                TestResults = tr.Results.Select(r =>
+                TestResults = tr.TestEntries.Select(e =>
                 {
-                    var def = GetTestDefMatch(r);
+                    var result = tr.Results.SingleOrDefault(x => e.testId.Equals(x.testId) && tr.TestDefinitions.Any(y => x.executionId.Equals(y.Execution.id)));
+                    var def = tr.TestDefinitions.SingleOrDefault(x => e.executionId.Equals(x.Execution.id));
                     var assembly = string.IsNullOrWhiteSpace(testAssemblyPathOverride) ? def?.TestMethod?.codeBase : Path.Combine(testAssemblyPathOverride, Path.GetFileName(def?.TestMethod?.codeBase));
-                    var item = new TestResult(assembly, def?.TestMethod?.className, r.testName, r.outcome, r.Output?.ErrorInfo?.Message, r.Output?.ErrorInfo?.StackTrace, r.duration.TimeOfDay);
+                    var item = new TestResult(assembly, def?.TestMethod?.className, result.testName, result.outcome, result.Output?.ErrorInfo?.Message, result.Output?.ErrorInfo?.StackTrace, result.duration.TimeOfDay);
                     if (def != null)
                     {
                         SetOwner(item);
                     }
                     else
                     {
-                        Log.Warning($"{defNotFound++}. TestDefinition not found for: {r.testName} (testId={r.testId}, executionId={r.executionId})");
+                        Log.Warning($"{defNotFound++}. TestDefinition not found for: {result.testName} (testId={result.testId}, executionId={result.executionId})");
                         item = null;
                     }
 
@@ -245,12 +247,6 @@ namespace ReporTrx
             }
         }
 
-        private static TestRunUnitTest GetTestDefMatch(TestRunUnitTestResult result)
-        {
-            var def = tr.TestDefinitions.Where(x => result.executionId.Equals(x.Execution.id))?.ToList();
-            return def?.SingleOrDefault();
-        }
-
         public static HtmlTag AddTag(string tag = "div", string text = "", HtmlTag parent = null)
         {
             var node = new HtmlTag(tag);
@@ -276,35 +272,46 @@ namespace ReporTrx
             const string ownerPrefix = "owner=";
             var tests = TestsPerAssembly.GetOrAdd(testResult.Assembly, k =>
             {
-                var testAssembly = Assembly.LoadFrom(k);
-                var types = testAssembly.GetTypes().Where(x => x.Name.EndsWith("Feature", StringComparison.OrdinalIgnoreCase));
-
-                // var methods = types.SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")));
-                var methods = types.Select(x =>
-                new
+                if (File.Exists(k))
                 {
-                    Owner = x.CustomAttributes?.FirstOrDefault(y => y.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true)?.ConstructorArguments?.FirstOrDefault().Value?.ToString().Replace(ownerPrefix, string.Empty),
-                    Methods = x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")))
-                });
+                    var testAssembly = Assembly.LoadFrom(k);
+                    var types = testAssembly.GetTypes().Where(x => x.Name.EndsWith("Feature", StringComparison.OrdinalIgnoreCase));
 
-                var cad = new List<TestResult>();
-                foreach (var m in methods)
-                {
-                    cad.AddRange(m.Methods.Select(x =>
+                    // var methods = types.SelectMany(x => x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")));
+                    var methods = types.Select(x =>
+                    new
                     {
-                        var desc = x.CustomAttributes?.FirstOrDefault(y => y?.AttributeType.Name.Contains("DescriptionAttribute") == true);
-                        var cat = x.CustomAttributes?.FirstOrDefault(y => y?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true);
-                        var owner = cat?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.Replace(ownerPrefix, string.Empty) ?? m.Owner;
-                        var item = new TestResult(testResult.Assembly, x.ReflectedType.FullName, x.Name, owner: owner);
-                        return item;
-                    }).ToList());
-                }
+                        Owner = x.CustomAttributes?.FirstOrDefault(y => y.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true)?.ConstructorArguments?.FirstOrDefault().Value?.ToString().Replace(ownerPrefix, string.Empty),
+                        Methods = x.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(m => m.DeclaringType != typeof(object) && !m.IsSpecialName && m.CustomAttributes.Any(z => z.AttributeType.Name.Contains("DescriptionAttribute")))
+                    });
 
-                return cad;
+                    var cad = new List<TestResult>();
+                    foreach (var m in methods)
+                    {
+                        cad.AddRange(m.Methods.Select(x =>
+                        {
+                            var desc = x.CustomAttributes?.FirstOrDefault(y => y?.AttributeType.Name.Contains("DescriptionAttribute") == true);
+                            var cat = x.CustomAttributes?.FirstOrDefault(y => y?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase) == true);
+                            var owner = cat?.ConstructorArguments?.FirstOrDefault().Value?.ToString()?.Replace(ownerPrefix, string.Empty) ?? m.Owner;
+                            var item = new TestResult(testResult.Assembly, x.ReflectedType.FullName, x.Name, owner: owner);
+                            return item;
+                        }).ToList());
+                    }
+
+                    return cad;
+                }
+                else
+                {
+                    Log.Warning($"Assembly not found (override the value of 'TestAssemblyFolderOverride' in the config if this is expected): {k}");
+                    return null;
+                }
             });
 
-            var owners = tests.Where(t => t.TestName.Equals(testResult.TestName.Split('(').FirstOrDefault()) && t.ClassName.Equals(testResult.ClassName)).Select(x => x.Owner?.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
-            testResult.Owner = string.Join(Constants.Space, owners);
+            var owners = tests?.Where(t => t.TestName.Equals(testResult.TestName.Split('(').FirstOrDefault()) && t.ClassName.Equals(testResult.ClassName))?.Select(x => x.Owner?.Trim())?.Where(x => !string.IsNullOrWhiteSpace(x))?.Distinct()?.ToList();
+            if (owners != null)
+            {
+                testResult.Owner = string.Join(Constants.Space, owners).Trim();
+            }
             ////if (owners.Count > 1)
             ////{
             ////    Console.WriteLine(string.Empty);
@@ -316,6 +323,8 @@ namespace ReporTrx
         private static void Save(string file)
         {
             doc.WriteToFile($"{file}.html");
+            Console.WriteLine();
+            Log.Information($"File saved to: {file}.html");
         }
 
         private static void SetLogger()
