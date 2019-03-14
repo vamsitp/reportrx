@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Reflection;
 
     public static class Constants
     {
@@ -29,6 +30,8 @@
         public const string Passed = "Passed";
 
         public const string Script = "script";
+
+        public const string Space = " ";
 
         public const string Src = "src";
 
@@ -61,6 +64,8 @@
         public static readonly string Style = ConfigurationManager.AppSettings[nameof(Style)];
 
         public static readonly string TableStyle = ConfigurationManager.AppSettings[nameof(TableStyle)];
+
+        public static readonly string TestAssemblyFolderOverride = ConfigurationManager.AppSettings[nameof(TestAssemblyFolderOverride)];
 
         public static readonly int TopSlowestThresholdInMins = int.Parse(ConfigurationManager.AppSettings[nameof(TopSlowestThresholdInMins)]);
 
